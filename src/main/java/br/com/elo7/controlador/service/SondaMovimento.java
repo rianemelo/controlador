@@ -2,10 +2,10 @@ package br.com.elo7.controlador.service;
 
 public interface SondaMovimento {
 
-	void left(String direcao);
+	void left(Integer omega);
 
-	void right(String direcao);
+	void right(Integer omega);
 
-	void mover(String direcao);
+	void mover(Integer omega);
 
 }
