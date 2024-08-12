@@ -1,64 +1,96 @@
 package br.com.elo7.controlador.model;
 
-import br.com.elo7.controlador.service.SondaMovimento;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
-public class Sonda implements SondaMovimento {
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
-	private final Integer NOVENTA_GRAUS = 90;
+@Entity
+@Table(name = "sonda")
+public class Sonda {
 
-	private Integer x;
-	private Integer y;
-	private Integer theta;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-	public Sonda(Integer x, Integer y, Integer theta) {
-		this.x = x;
-		this.y = y;
-		this.theta = theta;
+	@Column(name = "posicaoX")
+	@NotNull
+	@Min(value = -5)
+	@Max(value = 5)
+	private Integer posicaoX;
+
+	@Column(name = "posicaoY")
+	@NotNull
+	@Min(value = -5)
+	@Max(value = 5)
+	private Integer posicaoY;
+
+	@Column(name = "angulo")
+	@NotNull
+	private Integer angulo;
+
+	@JsonBackReference
+	@ManyToOne(cascade = CascadeType.ALL, optional = false)
+	@JoinColumn(name = "planeta_id")
+	private Planeta planeta;
+
+	public Sonda() {
 	}
 
-	private void transladar(Integer angulo) {
-		Integer omega = angulo / 90;
-		x = x + (int) Math.cos(Math.PI*omega/2);
-		y = y + (int) Math.sin(Math.PI*omega/2);
+	public Sonda(Integer posicaoX, Integer posicaoY, Integer angulo) {
+		this.posicaoX = posicaoX;
+		this.posicaoY = posicaoY;
+		this.angulo = angulo;
 	}
 
-	@Override
-	public void mover(String comando) {
-		switch (comando) {
-		case "L":
-			theta += NOVENTA_GRAUS;
-			break;
-		case "R":
-			theta -= NOVENTA_GRAUS;
-			break;
-		case "M":
-			transladar(theta);
-			break;
-		}
-	}
-	
-	public Integer getX() {
-		return x;
+	public Long getId() {
+		return id;
 	}
 
-	public void setX(Integer x) {
-		this.x = x;
+	public void setId(Long id) {
+		this.id = id;
 	}
 
-	public Integer getY() {
-		return y;
+	public Integer getPosicaoX() {
+		return posicaoX;
 	}
 
-	public void setY(Integer y) {
-		this.y = y;
+	public void setPosicaoX(Integer posicaoX) {
+		this.posicaoX = posicaoX;
 	}
 
-	public Integer getTheta() {
-		return theta;
+	public Integer getPosicaoY() {
+		return posicaoY;
 	}
 
-	public void setTheta(Integer theta) {
-		this.theta = theta;
+	public void setPosicaoY(Integer posicaoY) {
+		this.posicaoY = posicaoY;
+	}
+
+	public Integer getAngulo() {
+		return angulo;
+	}
+
+	public void setAngulo(Integer angulo) {
+		this.angulo = angulo;
+	}
+
+	public Planeta getPlaneta() {
+		return planeta;
+	}
+
+	public void setPlaneta(Planeta planeta) {
+		this.planeta = planeta;
 	}
 
 }
