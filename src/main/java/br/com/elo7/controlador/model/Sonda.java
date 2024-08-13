@@ -35,9 +35,9 @@ public class Sonda {
 	@Max(value = 5)
 	private Integer posicaoY;
 
-	@Column(name = "angulo")
+	@Column(name = "direcao")
 	@NotNull
-	private Integer angulo;
+	private String direcao;
 
 	@JsonBackReference
 	@ManyToOne(cascade = CascadeType.ALL, optional = false)
@@ -47,10 +47,10 @@ public class Sonda {
 	public Sonda() {
 	}
 
-	public Sonda(Integer posicaoX, Integer posicaoY, Integer angulo) {
+	public Sonda(Integer posicaoX, Integer posicaoY, String direcao) {
 		this.posicaoX = posicaoX;
 		this.posicaoY = posicaoY;
-		this.angulo = angulo;
+		this.direcao = direcao;
 	}
 
 	public Long getId() {
@@ -77,12 +77,12 @@ public class Sonda {
 		this.posicaoY = posicaoY;
 	}
 
-	public Integer getAngulo() {
-		return angulo;
+	public String getDirecao() {
+		return direcao;
 	}
 
-	public void setAngulo(Integer angulo) {
-		this.angulo = angulo;
+	public void setDirecao(String direcao) {
+		this.direcao = direcao;
 	}
 
 	public Planeta getPlaneta() {

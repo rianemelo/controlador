@@ -1,14 +1,13 @@
 package br.com.elo7.controlador.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.elo7.controlador.dto.MoverSondaRequestDTO;
 import br.com.elo7.controlador.model.Planeta;
 import br.com.elo7.controlador.model.Sonda;
-import br.com.elo7.controlador.model.SondaM;
 import br.com.elo7.controlador.repository.PlanetaRepository;
 import br.com.elo7.controlador.repository.SondaRepository;
 
@@ -21,6 +20,9 @@ public class SondaService {
 	@Autowired
 	private PlanetaRepository planetaRepository;
 
+	@Autowired
+	private SondaMovimento sondaMovimento;
+
 	public List<Sonda> listarSondas(Long planetaId) {
 		return sondaRepository.findByPlanetaId(planetaId);
 	}
@@ -30,77 +32,55 @@ public class SondaService {
 	}
 
 	private Sonda encontrarSondaPelaPosicao(Long planetaId, Integer x, Integer y) {
-		return sondaRepository.findByPlanetaIdAndPosicaoXAndPosicaoY(planetaId, x, y);
+		return sondaRepository.findByPlanetaIdAndPosicaoXAndPosicaoY(planetaId, x, y)
+				.orElseThrow(() -> new IllegalArgumentException(
+						"Sonda nao encontrada. Verifique se o planeta e a sonda estao no controlador."));
 	}
 
-	public boolean aterrissarSonda(Long planetaId, Sonda sonda) {
-		Optional<Planeta> planeta = planetaRepository.findById(planetaId);
-		if (planeta.isEmpty()) {
-			return false;
-		}
-		if (encontrarSondaPelaPosicao(planetaId, sonda.getPosicaoX(), sonda.getPosicaoY()) != null) {
-			return false;
+	public void aterrissarSonda(Long planetaId, Sonda sonda) {
+		Planeta planeta = planetaRepository.findById(planetaId)
+				.orElseThrow(() -> new IllegalArgumentException("Planeta nao esta no controlador!"));
+
+		if (sondaRepository.existsByPlanetaIdAndPosicaoXAndPosicaoY(planetaId, sonda.getPosicaoX(),
+				sonda.getPosicaoY())) {
+			throw new IllegalArgumentException(
+					"Aterrissagem abortada! Risco de colisao: posicao ja ocupada por outra sonda!");
 		}
 
-		sonda.setPlaneta(planeta.get());
+		sonda.setPlaneta(planeta);
 		sondaRepository.save(sonda);
-		return true;
 	}
 
-	public Sonda moverSonda(Long planetaId, Integer x, Integer y, String comando) {
-		Sonda sonda = encontrarSondaPelaPosicao(planetaId, x, y);
-
-		String[] comandos = comando.toUpperCase().split("");
-
-		SondaM sondaM = new SondaM(x, y, sonda.getAngulo());
-		for (int i = 0; i < comandos.length; i++) {
-			sondaM.mover(comandos[i]);
+	public Sonda moverSonda(MoverSondaRequestDTO request) {
+		if (!planetaRepository.existsById(request.getPlanetaId())) {
+			throw new IllegalArgumentException("Comando cancelado: planeta nao esta no controlador.");
 		}
 
-		sonda.setAngulo(sondaM.getTheta());
-		sonda.setPosicaoX(sondaM.getX());
-		sonda.setPosicaoY(sondaM.getY());
+		Sonda sonda = encontrarSondaPelaPosicao(request.getPlanetaId(), request.getPosicaoX(), request.getPosicaoY());
+		String[] listaComandos = request.getComandos().split("");
+
+		for (int i = 0; i < listaComandos.length; i++) {
+			sondaMovimento.mover(sonda, listaComandos[i]);
+
+			if (sonda.getPosicaoX() >= 6 || sonda.getPosicaoY() >= 6 || sonda.getPosicaoX() <= -6
+					|| sonda.getPosicaoY() <= -6) {
+				throw new IllegalArgumentException(
+						"Comando cancelado: sequencia manda a sonda para o espaco. PLANETA 5x5!");
+			}
+		}
+
+		if (sondaRepository.existsByPlanetaIdAndPosicaoXAndPosicaoY(request.getPlanetaId(), sonda.getPosicaoX(),
+				sonda.getPosicaoY())) {
+			throw new IllegalArgumentException(
+					"Comando cancelado. Risco de colisao: posicao ja ocupada por outra sonda!");
+		}
+
 		return sondaRepository.save(sonda);
 	}
 
-	public String validarMovimento(Long planetaId, Integer x, Integer y, String comando) {
+	public void detonarSonda(Long planetaId, Integer x, Integer y) {
 		Sonda sonda = encontrarSondaPelaPosicao(planetaId, x, y);
-		if (sonda == null) {
-			return "Sonda nao encontrada. Verifique se o planeta e a sonda estao no controlador";
-		}
-
-		SondaM sondaM = new SondaM(x, y, sonda.getAngulo());
-
-		String[] comandos = comando.toUpperCase().split("");
-		StringBuilder comandoPrevia = new StringBuilder();
-
-		for (int i = 0; i < comandos.length; i++) {
-			String z = comandos[i];
-			if (!z.equals("L") && !z.equals("R") && !z.equals("M")) {
-				return String.format("Comando %s nao e permitido!", comandos[i]);
-			}
-
-			sondaM.mover(comandos[i]);
-			comandoPrevia.append(comandos[i]);
-			if (sondaM.getX() >= 6 || sondaM.getY() >= 6 || sondaM.getX() <= -6 || sondaM.getY() <= -6) {
-				return String.format("Sequencia de comandos %s mandam a sonda para o espaco, planeta 5x5!", comandoPrevia.toString());
-			}
-		}
-		
-		if (sondaRepository.existsByPosicaoXAndPosicaoY(sondaM.getX(), sondaM.getY())) {
-			return "Risco de colisao, posicao ja esta ocupada por outra sonda.";
-		}
-		
-		return null;
-	}
-
-	public boolean detonarSonda(Long planetaId, Integer x, Integer y) {
-		Sonda sonda = encontrarSondaPelaPosicao(planetaId, x, y);
-		boolean posicaoLivre = sonda == null ? true : false;
-		if (!posicaoLivre) {
-			sondaRepository.delete(sonda);
-		}
-		return posicaoLivre;
+		sondaRepository.delete(sonda);
 	}
 
 }

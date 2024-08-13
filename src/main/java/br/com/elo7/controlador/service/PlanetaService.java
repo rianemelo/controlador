@@ -16,23 +16,25 @@ public class PlanetaService {
 	private PlanetaRepository planetaRepository;
 
 	public List<Planeta> listarPlanetas() {
-		return planetaRepository.findAll(); //retorna [] se não houver registros
+		return planetaRepository.findAll();
 	}
 
 	public Optional<Planeta> encontrarPlaneta(Long id) {
-		return planetaRepository.findById(id); //retorna null se não houver registro com o dado id
+		return planetaRepository.findById(id);
 	}
 
-	public Planeta salvarPlaneta(Planeta planeta) {
-		return planetaRepository.save(planeta);
+	public void salvarPlaneta(Planeta planeta) {
+		if (planetaRepository.existsById(planeta.getId())) {
+			throw new IllegalArgumentException("Planeta ja registrado no controlador, se quiser pode renomea-lo.");
+		}
+		planetaRepository.save(planeta);
 	}
 
-	public boolean detonarPlaneta(Long id) {
+	public void detonarPlaneta(Long id) {
 		if (!planetaRepository.existsById(id)) {
-			return false;
+			throw new IllegalArgumentException("Detonacao abortada: planeta nao esta no controlador!");
 		}
 		planetaRepository.deleteById(id);
-		return true;
 	}
 
 }
