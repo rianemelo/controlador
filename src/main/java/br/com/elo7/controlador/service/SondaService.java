@@ -57,25 +57,16 @@ public class SondaService {
 		}
 
 		Sonda sonda = encontrarSondaPelaPosicao(request.getPlanetaId(), request.getPosicaoX(), request.getPosicaoY());
-		String[] listaComandos = request.getComandos().split("");
 
-		for (int i = 0; i < listaComandos.length; i++) {
-			sondaMovimento.mover(sonda, listaComandos[i]);
+		Sonda sondaMovida = sondaMovimento.mover(sonda, request.getComandos());
 
-			if (sonda.getPosicaoX() >= 6 || sonda.getPosicaoY() >= 6 || sonda.getPosicaoX() <= -6
-					|| sonda.getPosicaoY() <= -6) {
-				throw new IllegalArgumentException(
-						"Comando cancelado: sequencia manda a sonda para o espaco. PLANETA 5x5!");
-			}
-		}
-
-		if (sondaRepository.existsByPlanetaIdAndPosicaoXAndPosicaoY(request.getPlanetaId(), sonda.getPosicaoX(),
-				sonda.getPosicaoY())) {
+		if (sondaRepository.existsByPlanetaIdAndPosicaoXAndPosicaoY(request.getPlanetaId(), sondaMovida.getPosicaoX(),
+				sondaMovida.getPosicaoY())) {
 			throw new IllegalArgumentException(
 					"Comando cancelado. Risco de colisao: posicao ja ocupada por outra sonda!");
 		}
 
-		return sondaRepository.save(sonda);
+		return sondaRepository.save(sondaMovida);
 	}
 
 	public void detonarSonda(Long planetaId, Integer x, Integer y) {

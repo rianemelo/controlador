@@ -33,7 +33,8 @@ public class Planeta {
 	public Planeta() {
 	}
 
-	public Planeta(String nome) {
+	public Planeta(Long id, String nome) {
+		this.id = id;
 		this.nome = nome;
 	}
 
